@@ -1,31 +1,82 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+
+import api from './services/api';
 
 import "./styles.css";
 
+
 function App() {
+
+
+  const [repositories, setRepositories] = useState([]);
+
+
+  // Carga inicial dos repositórios existentes
+  useEffect(() => {
+    // Buscar todos os repositórios existentes
+    api.get('/repositories')
+      .then(response => {
+        setRepositories(response.data);
+      });
+  }, []);
+
+
+  /** Incluir novo repositório. */
   async function handleAddRepository() {
-    // TODO
+    const response = await api.post('/repositories', {
+      title: `Título temp-${Date.now()}`,
+      url: 'URL temp',
+      techs: ['tech 1 temp', 'tech 2 temp'],
+    })
+
+    const repository = response.data;
+
+    setRepositories([...repositories, repository]);
   }
 
+
+  /** Excluir um repositório existente.
+   * @param id Id do repositório a ser excluído
+   */
   async function handleRemoveRepository(id) {
-    // TODO
+    // Remove o item da lista de repositórios
+    await api.delete(`/repositories/${id}`);
+    // Atualiza a lista de repositórios para exibição
+    const updatedRepositories = repositories.filter(repository => {
+      repository.id !== id
+    });
+    setRepositories(updatedRepositories);
   }
+
 
   return (
-    <div>
-      <ul data-testid="repository-list">
-        <li>
-          Repositório 1
+    <>
+      <div>
+        <ul data-testid="repository-list">
+          {repositories.map(repository => (
+            <li key={repository.id}>
+              {repository.title}
 
-          <button onClick={() => handleRemoveRepository(1)}>
-            Remover
-          </button>
-        </li>
-      </ul>
+              <button
+                type="button"
+                onClick={() => handleRemoveRepository(repository.id)}
+              >
+                Remover
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
 
-      <button onClick={handleAddRepository}>Adicionar</button>
-    </div>
+      <button
+        type="button"
+        onClick={handleAddRepository}
+      >
+        Adicionar
+      </button>
+    </>
   );
 }
+
 
 export default App;
